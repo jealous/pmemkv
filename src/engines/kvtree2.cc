@@ -89,7 +89,24 @@ void KVTree::Analyze(KVTreeAnalysis& analysis) {
     }
     LOG("Analyzed ok");
 }
-
+  
+void KVTree::ListAllKeyValuePairs(vector<string>& kv_pairs) {
+    LOG("Listing");
+    // iterate persistent leaves for stats
+    auto leaf = pmpool.get_root()->head;
+    while (leaf) {
+        for (int slot = LEAF_KEYS; slot--;) {
+            auto kvslot = leaf->slots[slot].get_rw();
+            if (!kvslot.empty()) {
+              kv_pairs.push_back(string(kvslot.key(), kvslot.keysize()));
+              kv_pairs.push_back(string(kvslot.val(), kvslot.valsize()));
+            }
+        }
+        leaf = leaf->next;  // advance to next linked leaf
+    }
+    LOG("List ok");
+}
+  
 KVStatus KVTree::Get(const int32_t limit, const int32_t keybytes, int32_t* valuebytes,
                      const char* key, char* value) {
     auto ckey = std::string(key, keybytes);

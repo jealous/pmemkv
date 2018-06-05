@@ -47,8 +47,13 @@ typedef enum {                                             // status enumeration
 #include <libpmemobj++/pool.hpp>
 #include <libpmemobj++/transaction.hpp>
 
+#include <vector>
+
+
 using std::string;
 using std::to_string;
+using std::vector;
+
 
 namespace pmemkv {
 
@@ -72,6 +77,8 @@ class KVEngine {                                           // storage engine imp
     virtual KVStatus Put(const string& key,                // copy value from std::string
                          const string& value) = 0;
     virtual KVStatus Remove(const string& key) = 0;        // remove value for key
+
+    virtual void ListAllKeyValuePairs(vector<string>& kv_pairs) = 0; // list all key value pairs
 };
 
 #pragma pack(push, 1)
