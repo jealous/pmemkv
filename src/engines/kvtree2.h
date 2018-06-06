@@ -150,6 +150,10 @@ class KVTree : public KVEngine {                           // hybrid B+ tree eng
 
     void ListAllKeyValuePairs(vector<string>& kv_pairs) final;      // list all the key value pairs
 
+    void ListAllKeys(vector<string>& keys) final;      // list all the keys
+
+    size_t TotalNumKeys() final;
+
   protected:
     KVLeafNode* LeafSearch(const string& key);             // find node for key
     void LeafFillEmptySlot(KVLeafNode* leafnode,           // write first unoccupied slot found

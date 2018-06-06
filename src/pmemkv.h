@@ -79,6 +79,10 @@ class KVEngine {                                           // storage engine imp
     virtual KVStatus Remove(const string& key) = 0;        // remove value for key
 
     virtual void ListAllKeyValuePairs(vector<string>& kv_pairs) = 0; // list all key value pairs
+
+    virtual void ListAllKeys(vector<string>& keys) = 0; // list all keys
+
+    virtual size_t TotalNumKeys() = 0; // get total number of keys.
 };
 
 #pragma pack(push, 1)

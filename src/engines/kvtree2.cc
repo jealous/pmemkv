@@ -106,7 +106,41 @@ void KVTree::ListAllKeyValuePairs(vector<string>& kv_pairs) {
     }
     LOG("List ok");
 }
-  
+
+void KVTree::ListAllKeys(vector<string>& keys) {
+    LOG("Listing");
+    // iterate persistent leaves for stats
+    auto leaf = pmpool.get_root()->head;
+    while (leaf) {
+        for (int slot = LEAF_KEYS; slot--;) {
+            auto kvslot = leaf->slots[slot].get_rw();
+            if (!kvslot.empty()) {
+              keys.push_back(string(kvslot.key(), kvslot.keysize()));
+            }
+        }
+        leaf = leaf->next;  // advance to next linked leaf
+    }
+    LOG("List ok");
+}
+
+size_t KVTree::TotalNumKeys() {
+    size_t size = 0;
+    LOG("Getting size");
+    // iterate persistent leaves for stats
+    auto leaf = pmpool.get_root()->head;
+    while (leaf) {
+        for (int slot = LEAF_KEYS; slot--;) {
+            auto kvslot = leaf->slots[slot].get_rw();
+            if (!kvslot.empty()) {
+              ++size;
+            }
+        }
+        leaf = leaf->next;  // advance to next linked leaf
+    }
+    LOG("Getting size ok");
+    return size;
+}
+
 KVStatus KVTree::Get(const int32_t limit, const int32_t keybytes, int32_t* valuebytes,
                      const char* key, char* value) {
     auto ckey = std::string(key, keybytes);

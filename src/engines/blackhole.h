@@ -56,6 +56,8 @@ class Blackhole : public KVEngine {
                  const string& value) final;
     KVStatus Remove(const string& key) final;              // remove value for key
     void ListAllKeyValuePairs(vector<string>& kv_pairs) final { return; }
+    void ListAllKeys(vector<string>& keys) final { return; }
+    size_t TotalNumKeys() final {return 0;}
 };
 
 } // namespace blackhole
