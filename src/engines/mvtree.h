@@ -142,11 +142,17 @@ class MVTree : public KVEngine {                           // hybrid B+ tree eng
                           const string& path,              // path to persistent pool
                           PMEMoid rootoid,
                           size_t size);                    // size used when creating pool
+    static KVEngine* OpenPopOid(const string& engine,            // open storage engine
+                          PMEMobjpool* pop,              // path to persistent pool
+                          PMEMoid rootoid,
+                          size_t size);                    // size used when creating pool
+
 
     MVTree (const string& path, size_t size);  // default constructor
     // OID_NULL means create a new tree, using a new pmemobj as the kvroot
-    MVTree (const string& path, PMEMoid rootoid, size_t size);  // default constructor
-    // MVTree(pool_base & pop, persistent_ptr<KVRoot> kvroot, size_t size);              
+    MVTree (const string& path, PMEMoid oid, size_t size);  // default constructor
+
+    MVTree(PMEMobjpool* pop, PMEMoid oid, size_t size);              
     ~MVTree();                                             // default destructor
 
     string Engine() final { return ENGINE; }               // engine identifier
@@ -160,7 +166,8 @@ class MVTree : public KVEngine {                           // hybrid B+ tree eng
     KVStatus Put(const string& key,                        // copy value from std::string
                  const string& value) final;
 
-    persistent_ptr<KVRoot> GetRoot();
+    PMEMoid GetRootOid();
+    PMEMobjpool* GetPool();
     KVStatus Remove(const string& key) final;              // remove value for key
 
     void Analyze(KVTreeAnalysis& analysis);                // report on internal state & stats

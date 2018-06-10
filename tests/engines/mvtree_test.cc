@@ -47,7 +47,6 @@ public:
     }
 };
 
-
 class MVTest : public testing::Test {
 public:
     KVTreeAnalysis analysis;
@@ -155,7 +154,7 @@ TEST_F(MVEmptyTest, FailsToCreateInstanceWithTinySize) {
 // =============================================================================================
 
 
-TEST_F(MVEmptyTest, CreateInstanceTest) {
+TEST_F(MVEmptyTest, CreateInstanceTestWithOid) {
     MVTree *kv = new MVTree(PATH, OID_NULL, PMEMOBJ_MIN_POOL);
     KVTreeAnalysis analysis = {};
     kv->Analyze(analysis);
@@ -165,7 +164,7 @@ TEST_F(MVEmptyTest, CreateInstanceTest) {
     delete kv;
 }
 
-TEST_F(MVEmptyTest, FailsToCreateInstanceWithInvalidPath) {
+TEST_F(MVEmptyTest, FailsToCreateInstanceWithInvalidPathWithOid) {
     try {
         new MVTree("/tmp/123/234/345/456/567/678/nope.nope", OID_NULL, PMEMOBJ_MIN_POOL);
         FAIL();
@@ -174,7 +173,7 @@ TEST_F(MVEmptyTest, FailsToCreateInstanceWithInvalidPath) {
     }
 }
 
-TEST_F(MVEmptyTest, FailsToCreateInstanceWithHugeSize) {
+TEST_F(MVEmptyTest, FailsToCreateInstanceWithHugeSizeWithOid) {
     try {
         new MVTree(PATH, OID_NULL, 9223372036854775807);   // 9.22 exabytes
         FAIL();
@@ -183,7 +182,7 @@ TEST_F(MVEmptyTest, FailsToCreateInstanceWithHugeSize) {
     }
 }
 
-TEST_F(MVEmptyTest, FailsToCreateInstanceWithTinySize) {
+TEST_F(MVEmptyTest, FailsToCreateInstanceWithTinySizeWithOid) {
     try {
         new MVTree(PATH, OID_NULL, PMEMOBJ_MIN_POOL - 1);  // too small
         FAIL();

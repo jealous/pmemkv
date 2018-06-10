@@ -58,12 +58,12 @@ KVEngine* KVEngine::Open(const string& engine, const string& path, const size_t 
     }
 }
 
-KVEngine* KVEngine::OpenOid(const string& engine, const string& path, PMEMoid rootoid, const size_t size) {
+KVEngine* KVEngine::OpenOid(const string& engine, const string& path, PMEMoid oid, const size_t size) {
     try {
         if (engine == blackhole::ENGINE) {
             return new blackhole::Blackhole();
         } else if(engine == mvtree::ENGINE) {
-            return new mvtree::MVTree(path, rootoid, size);
+            return new mvtree::MVTree(path, oid, size);
         } else if (engine == kvtree::ENGINE) {
             return new kvtree::KVTree(path, size);
         } else if (engine == kvtree2::ENGINE) {
@@ -77,6 +77,19 @@ KVEngine* KVEngine::OpenOid(const string& engine, const string& path, PMEMoid ro
         return nullptr;
     }
 }
+
+KVEngine* KVEngine::OpenPopOid(const string& engine, PMEMobjpool* pop, PMEMoid oid, const size_t size) {
+    try {
+        if(engine == mvtree::ENGINE) {
+            return new mvtree::MVTree(pop, oid, size);
+        } else {
+            return nullptr;
+        }
+    } catch (...) {
+        return nullptr;
+    }
+}
+
 
 void KVEngine::Close(KVEngine* kv) {
     auto engine = kv->Engine();

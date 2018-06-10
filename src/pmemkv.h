@@ -63,8 +63,15 @@ class KVEngine {                                           // storage engine imp
 
     static KVEngine* OpenOid(const string& engine,  // open storage engine
                              const string& path,    // path to persistent pool
-                             PMEMoid rootoid,       // The object used as root
+                             PMEMoid oid,       // The object used as root
                              size_t size);  // size used when creating pool
+
+    static KVEngine* OpenPopOid(const string& engine,  // open storage engine
+			     PMEMobjpool* pop,
+                             PMEMoid oid,       // The object used as root
+                             size_t size);  // size used when creating pool
+
+
 
     static void Close(KVEngine* kv);                       // close storage engine
 
@@ -109,8 +116,15 @@ KVEngine* kvengine_open(const char* engine,                // open storage engin
 
 KVEngine* kvengine_open_oid(const char* engine,                // open storage engine
                         const char* path,
-                        PMEMoid rootoid,
+                        PMEMoid oid,
                         size_t size);
+
+KVEngine* kvengine_open_pop_oid(const char* engine,                // open storage engine
+			PMEMobjpool* pop,
+                        PMEMoid oid,
+                        size_t size);
+
+
 
 void kvengine_close(KVEngine* kv);                         // close storage engine
 
