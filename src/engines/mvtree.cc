@@ -50,7 +50,7 @@ namespace mvtree {
 // MVTree METHODS
 // ===============================================================================================
 
-MVTree::MVTree (const string& path, size_t size) {
+MVTree::MVTree (const string& path, size_t size): pmpath(path) {
   if ((access(path.c_str(), F_OK) != 0) && (size > 0)) {
     LOG("Creating filesystem pool, path=" << path << ", size=" << to_string(size));
     pool<KVRoot> pop = pool<KVRoot>::create(path.c_str(), LAYOUT, size, S_IRWXU);
@@ -66,7 +66,7 @@ MVTree::MVTree (const string& path, size_t size) {
   LOG("Opened ok");
 }
 
-MVTree::MVTree (PMEMobjpool* pop , PMEMoid oid, size_t size): pmpool(pop) {
+MVTree::MVTree (PMEMobjpool* pop , PMEMoid oid, size_t size): pmpool(pop), pmpath("") {
   LOG("Opening pool, pop=" << pop << ", oid=" << oid.off);
   if(OID_IS_NULL(oid)) {
     transaction::exec_tx(pmpool, [&] {
@@ -82,7 +82,7 @@ MVTree::MVTree (PMEMobjpool* pop , PMEMoid oid, size_t size): pmpool(pop) {
 }
 
 
-MVTree::MVTree (const string& path, PMEMoid oid, size_t size) {
+MVTree::MVTree (const string& path, PMEMoid oid, size_t size): pmpath(path) {
   if ((access(path.c_str(), F_OK) != 0) && (size > 0)) {
     if(!OID_IS_NULL(oid)) {
       LOG("Invalid Parameters, new path with an existing PMEMoid is not allowed.");
@@ -90,8 +90,8 @@ MVTree::MVTree (const string& path, PMEMoid oid, size_t size) {
     } else {
       LOG("Creating filesystem pool, path=" << path << ", oid=" << oid.off
                                             << ", size=" << to_string(size));
-      pool_base pop = pool_base::create(path.c_str(), LAYOUT, size, S_IRWXU);
-      make_persistent_atomic<KVRoot>(pop, kv_root);
+      pmpool = pool_base::create(path.c_str(), LAYOUT, size, S_IRWXU);
+      make_persistent_atomic<KVRoot>(pmpool, kv_root);
     } 
   } else {
     LOG("Opening pool, path=" << path << ", oid=" << oid.off);
