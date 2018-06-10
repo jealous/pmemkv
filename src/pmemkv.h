@@ -46,6 +46,7 @@ typedef enum {                                             // status enumeration
 #include <libpmemobj++/persistent_ptr.hpp>
 #include <libpmemobj++/pool.hpp>
 #include <libpmemobj++/transaction.hpp>
+#include <libpmemobj++/make_persistent_atomic.hpp>
 
 using std::string;
 using std::to_string;
@@ -59,6 +60,12 @@ class KVEngine {                                           // storage engine imp
     static KVEngine* Open(const string& engine,            // open storage engine
                           const string& path,              // path to persistent pool
                           size_t size);                    // size used when creating pool
+
+    static KVEngine* OpenOid(const string& engine,  // open storage engine
+                             const string& path,    // path to persistent pool
+                             PMEMoid rootoid,       // The object used as root
+                             size_t size);  // size used when creating pool
+
     static void Close(KVEngine* kv);                       // close storage engine
 
     virtual string Engine() = 0;                           // engine identifier
@@ -97,6 +104,12 @@ typedef struct FFIBuffer FFIBuffer;
 
 KVEngine* kvengine_open(const char* engine,                // open storage engine
                         const char* path,
+                        size_t size);
+
+
+KVEngine* kvengine_open_oid(const char* engine,                // open storage engine
+                        const char* path,
+                        PMEMoid rootoid,
                         size_t size);
 
 void kvengine_close(KVEngine* kv);                         // close storage engine

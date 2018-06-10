@@ -36,6 +36,7 @@ set(SOURCE_FILES src/pmemkv.cc src/pmemkv.h
     src/engines/blackhole.h src/engines/blackhole.cc
     src/engines/kvtree.h src/engines/kvtree.cc
     src/engines/kvtree2.h src/engines/kvtree2.cc
+    src/engines/mvtree.h src/engines/mvtree.cc
     src/engines/btree.h src/engines/btree.cc
     src/engines/btree/persistent_b_tree.h src/engines/btree/pstring.h
 )
@@ -88,6 +89,7 @@ add_executable(pmemkv_test tests/pmemkv_test.cc tests/mock_tx_alloc.cc
                tests/engines/blackhole_test.cc
                tests/engines/btree_test.cc
                tests/engines/kvtree_test.cc
+               tests/engines/mvtree_test.cc
 )
 target_link_libraries(pmemkv_test pmemkv libgtest ${CMAKE_DL_LIBS})
 

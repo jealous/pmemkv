@@ -34,6 +34,7 @@
 #include "engines/kvtree.h"
 #include "engines/kvtree2.h"
 #include "engines/btree.h"
+#include "engines/mvtree.h"
 
 namespace pmemkv {
 
@@ -41,6 +42,28 @@ KVEngine* KVEngine::Open(const string& engine, const string& path, const size_t 
     try {
         if (engine == blackhole::ENGINE) {
             return new blackhole::Blackhole();
+        } else if(engine == mvtree::ENGINE) {
+            return new mvtree::MVTree(path, size);
+        } else if (engine == kvtree::ENGINE) {
+            return new kvtree::KVTree(path, size);
+        } else if (engine == kvtree2::ENGINE) {
+            return new kvtree2::KVTree(path, size);
+        } else if (engine == btree::ENGINE) {
+            return new btree::BTreeEngine(path, size);
+        } else {
+            return nullptr;
+        }
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+KVEngine* KVEngine::OpenOid(const string& engine, const string& path, PMEMoid rootoid, const size_t size) {
+    try {
+        if (engine == blackhole::ENGINE) {
+            return new blackhole::Blackhole();
+        } else if(engine == mvtree::ENGINE) {
+            return new mvtree::MVTree(path, rootoid, size);
         } else if (engine == kvtree::ENGINE) {
             return new kvtree::KVTree(path, size);
         } else if (engine == kvtree2::ENGINE) {
@@ -59,6 +82,8 @@ void KVEngine::Close(KVEngine* kv) {
     auto engine = kv->Engine();
     if (engine == blackhole::ENGINE) {
         delete (blackhole::Blackhole*) kv;
+    } else if (engine == mvtree::ENGINE) {
+        delete (mvtree::MVTree*) kv;
     } else if (engine == kvtree::ENGINE) {
         delete (kvtree::KVTree*) kv;
     } else if (engine == kvtree2::ENGINE) {
@@ -70,6 +95,10 @@ void KVEngine::Close(KVEngine* kv) {
 
 extern "C" KVEngine* kvengine_open(const char* engine, const char* path, const size_t size) {
     return KVEngine::Open(engine, path, size);
+};
+
+extern "C" KVEngine* kvengine_open_oid(const char* engine, const char* path, PMEMoid rootoid, const size_t size) {
+    return KVEngine::OpenOid(engine, path, rootoid, size);
 };
 
 extern "C" void kvengine_close(KVEngine* kv) {
