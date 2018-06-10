@@ -86,7 +86,7 @@ public:
         std::remove(PATH.c_str());
         rootoid = OID_NULL;
         Open();
-        rootoid = kv->GetRoot().raw();
+        rootoid = kv->GetRootOid();
     }
 
     ~MVOidTest() { delete kv; }
@@ -983,7 +983,7 @@ public:
         std::remove(PATH.c_str());
         rootoid = OID_NULL;
         Open();
-        rootoid = kv->GetRoot().raw();
+        rootoid = kv->GetRootOid();
     }
 
     ~MVOidFullTest() { delete kv; }
@@ -1023,7 +1023,7 @@ private:
         } else {
             std::cout << "!!! creating cached copy at " << PATH_CACHED << "\n";
             MVTree *kvt = new MVTree(PATH, rootoid, SIZE);
-            rootoid = kvt->GetRoot().raw();
+            rootoid = kvt->GetRootOid();
             for (int i = 1; i <= LARGE_LIMIT; i++) {
                 string istr = to_string(i);
                 ASSERT_TRUE(kvt->Put(istr, (istr + "!")) == OK) << pmemobj_errormsg();
