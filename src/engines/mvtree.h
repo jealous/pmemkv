@@ -165,6 +165,11 @@ class MVTree : public KVEngine {                           // hybrid B+ tree eng
                  string* value) final;
     KVStatus Put(const string& key,                        // copy value from std::string
                  const string& value) final;
+    void ListAllKeyValuePairs(vector<string>& kv_pairs) final; // list all key value pairs
+
+    void ListAllKeys(vector<string>& keys) final; // list all keys
+
+    size_t TotalNumKeys() final; // get total number of keys.
 
     PMEMoid GetRootOid() final;
     PMEMobjpool* GetPool() final;

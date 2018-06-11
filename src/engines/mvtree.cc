@@ -160,6 +160,60 @@ void MVTree::Analyze(KVTreeAnalysis &analysis) {
   LOG("Analyzed ok");
 }
 
+
+ 
+void MVTree::ListAllKeyValuePairs(vector<string>& kv_pairs) {
+    LOG("Listing");
+    // iterate persistent leaves for stats
+    auto leaf = kv_root->head;
+    while (leaf) {
+        for (int slot = LEAF_KEYS; slot--;) {
+            auto kvslot = leaf->slots[slot].get_rw();
+            if (!kvslot.empty()) {
+              kv_pairs.push_back(string(kvslot.key(), kvslot.keysize()));
+              kv_pairs.push_back(string(kvslot.val(), kvslot.valsize()));
+            }
+        }
+        leaf = leaf->next;  // advance to next linked leaf
+    }
+    LOG("List ok");
+}
+
+void MVTree::ListAllKeys(vector<string>& keys) {
+    LOG("Listing");
+    // iterate persistent leaves for stats
+    auto leaf = kv_root->head;
+    while (leaf) {
+        for (int slot = LEAF_KEYS; slot--;) {
+            auto kvslot = leaf->slots[slot].get_rw();
+            if (!kvslot.empty()) {
+              keys.push_back(string(kvslot.key(), kvslot.keysize()));
+            }
+        }
+        leaf = leaf->next;  // advance to next linked leaf
+    }
+    LOG("List ok");
+}
+
+size_t MVTree::TotalNumKeys() {
+    size_t size = 0;
+    LOG("Getting size");
+    // iterate persistent leaves for stats
+    auto leaf = kv_root->head;
+    while (leaf) {
+        for (int slot = LEAF_KEYS; slot--;) {
+            auto kvslot = leaf->slots[slot].get_rw();
+            if (!kvslot.empty()) {
+              ++size;
+            }
+        }
+        leaf = leaf->next;  // advance to next linked leaf
+    }
+    LOG("Getting size ok");
+    return size;
+}
+
+
 KVStatus MVTree::Get(const int32_t limit, const int32_t keybytes, int32_t *valuebytes,
                          const char *key, char *value) {
   auto ckey = std::string(key, keybytes);
