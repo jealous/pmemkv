@@ -75,6 +75,10 @@ class BTreeEngine : public KVEngine {
     PMEMoid GetRootOid() final;
     PMEMobjpool* GetPool() final;
 
+    void ListAllKeyValuePairs(vector<string>& kv_pairs) final {return;}  
+    void ListAllKeys(vector<string>& keys) final {return;}
+    size_t TotalNumKeys() final {return 0;}
+
   private:
     void Recover();
 

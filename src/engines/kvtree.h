@@ -136,6 +136,13 @@ class KVTree : public KVEngine {                           // hybrid B+ tree eng
     PMEMobjpool* GetPool() final;
 
     void Analyze(KVTreeAnalysis& analysis);                // report on internal state & stats
+
+    void ListAllKeyValuePairs(vector<string>& kv_pairs) final {return;}
+
+    void ListAllKeys(vector<string>& keys) final {return;}
+
+    size_t TotalNumKeys() final {return 0;}
+
   protected:
     KVLeafNode* LeafSearch(const string& key);             // find node for key
     void LeafFillEmptySlot(KVLeafNode* leafnode,           // write first unoccupied slot found

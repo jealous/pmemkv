@@ -48,8 +48,13 @@ typedef enum {                                             // status enumeration
 #include <libpmemobj++/transaction.hpp>
 #include <libpmemobj++/make_persistent_atomic.hpp>
 
+#include <vector>
+
+
 using std::string;
 using std::to_string;
+using std::vector;
+
 
 namespace pmemkv {
 
@@ -86,8 +91,15 @@ class KVEngine {                                           // storage engine imp
     virtual KVStatus Put(const string& key,                // copy value from std::string
                          const string& value) = 0;
     virtual KVStatus Remove(const string& key) = 0;        // remove value for key
+
     virtual PMEMoid GetRootOid() = 0;
     virtual PMEMobjpool* GetPool() = 0;
+
+    virtual void ListAllKeyValuePairs(vector<string>& kv_pairs) = 0; // list all key value pairs
+
+    virtual void ListAllKeys(vector<string>& keys) = 0; // list all keys
+
+    virtual size_t TotalNumKeys() = 0; // get total number of keys.
 
 };
 
