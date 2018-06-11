@@ -41,15 +41,16 @@ using std::vector;
 using pmem::obj::p;
 using pmem::obj::persistent_ptr;
 using pmem::obj::make_persistent;
+using pmem::obj::make_persistent_atomic;
 using pmem::obj::transaction;
 using pmem::obj::delete_persistent;
 using pmem::obj::pool;
 using pmem::obj::pool_base;
 
 namespace pmemkv {
-namespace kvtree2 {
+namespace mvtree {
 
-const string ENGINE = "kvtree2";                           // engine identifier
+const string ENGINE = "mvtree";                           // engine identifier
 
 #define INNER_KEYS 4                                       // maximum keys for inner nodes
 #define INNER_KEYS_MIDPOINT (INNER_KEYS / 2)               // halfway point within the node
@@ -130,10 +131,29 @@ struct KVTreeAnalysis {                                    // tree analysis stru
     string path;                                           // path when constructed
 };
 
-class KVTree : public KVEngine {                           // hybrid B+ tree engine
+class MVTree : public KVEngine {                           // hybrid B+ tree engine
   public:
-    KVTree(const string& path, size_t size);               // default constructor
-    ~KVTree();                                             // default destructor
+
+    static KVEngine* Open(const string& engine,            // open storage engine
+                          const string& path,              // path to persistent pool
+                          size_t size);                    // size used when creating pool
+
+    static KVEngine* OpenOid(const string& engine,            // open storage engine
+                          const string& path,              // path to persistent pool
+                          PMEMoid rootoid,
+                          size_t size);                    // size used when creating pool
+    static KVEngine* OpenPopOid(const string& engine,            // open storage engine
+                          PMEMobjpool* pop,              // path to persistent pool
+                          PMEMoid rootoid,
+                          size_t size);                    // size used when creating pool
+
+
+    MVTree (const string& path, size_t size);  // default constructor
+    // OID_NULL means create a new tree, using a new pmemobj as the kvroot
+    MVTree (const string& path, PMEMoid oid, size_t size);  // default constructor
+
+    MVTree(PMEMobjpool* pop, PMEMoid oid, size_t size);              
+    ~MVTree();                                             // default destructor
 
     string Engine() final { return ENGINE; }               // engine identifier
     KVStatus Get(int32_t limit,                            // copy value to fixed-size buffer
@@ -145,19 +165,12 @@ class KVTree : public KVEngine {                           // hybrid B+ tree eng
                  string* value) final;
     KVStatus Put(const string& key,                        // copy value from std::string
                  const string& value) final;
-    KVStatus Remove(const string& key) final;              // remove value for key
 
     PMEMoid GetRootOid() final;
     PMEMobjpool* GetPool() final;
+    KVStatus Remove(const string& key) final;              // remove value for key
 
     void Analyze(KVTreeAnalysis& analysis);                // report on internal state & stats
-
-    void ListAllKeyValuePairs(vector<string>& kv_pairs) final;      // list all the key value pairs
-
-    void ListAllKeys(vector<string>& keys) final;      // list all the keys
-
-    size_t TotalNumKeys() final;
-
   protected:
     KVLeafNode* LeafSearch(const string& key);             // find node for key
     void LeafFillEmptySlot(KVLeafNode* leafnode,           // write first unoccupied slot found
@@ -184,13 +197,14 @@ class KVTree : public KVEngine {                           // hybrid B+ tree eng
                         size_t size);
     void Recover();                                        // reload state from persistent pool
   private:
-    KVTree(const KVTree&);                                 // prevent copying
-    void operator=(const KVTree&);                         // prevent assigning
+    MVTree(const MVTree&);                                 // prevent copying
+    void operator=(const MVTree&);                         // prevent assigning
     vector<persistent_ptr<KVLeaf>> leaves_prealloc;        // persisted but unused leaves
     const string pmpath;                                   // path when constructed
-    pool<KVRoot> pmpool;                                   // pool for persistent root
+    pool_base pmpool;
+    persistent_ptr<KVRoot> kv_root;                                      // pointer to persistent root
     unique_ptr<KVNode> tree_top;                           // pointer to uppermost inner node
 };
 
-} // namespace kvtree
+} // namespace mvtree
 } // namespace pmemkv

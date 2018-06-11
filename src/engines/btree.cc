@@ -102,6 +102,13 @@ KVStatus BTreeEngine::Remove(const string& key) {
     LOG("Remove key=" << key.c_str());
     return FAILED;
 }
+PMEMoid BTreeEngine::GetRootOid() {
+    return pmpool.get_root().raw();
+}
+PMEMobjpool* BTreeEngine::GetPool() {
+    return pmpool.get_handle();
+}
+
 
 void BTreeEngine::Recover() {
     auto root_data = pmpool.get_root();

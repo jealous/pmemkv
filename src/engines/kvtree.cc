@@ -207,6 +207,13 @@ KVStatus KVTree::Remove(const string& key) {
     }
     return OK;
 }
+PMEMoid KVTree::GetRootOid() {
+  return pmpool.get_root().raw();
+}
+PMEMobjpool* KVTree::GetPool() {
+    return pmpool.get_handle();
+}
+
 
 // ===============================================================================================
 // PROTECTED LEAF METHODS
