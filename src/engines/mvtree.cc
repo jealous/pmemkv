@@ -45,7 +45,7 @@ namespace pmemkv {
 namespace mvtree {
 
 
-
+static const string PMPATH_NO_PATH = "nopath";
 // ===============================================================================================
 // MVTree METHODS
 // ===============================================================================================
@@ -66,7 +66,11 @@ MVTree::MVTree (const string& path, size_t size): pmpath(path) {
   LOG("Opened ok");
 }
 
-MVTree::MVTree (PMEMobjpool* pop , PMEMoid oid, size_t size): pmpool(pop), pmpath("") {
+// For this ctor, require pop is already opened, and we won't call pop.close in dtor
+MVTree::MVTree (PMEMobjpool* pop , PMEMoid oid, size_t size): pmpool(pop), pmpath(PMPATH_NO_PATH) {
+  if(pop == nullptr) {
+    throw std::invalid_argument( "received PMEMobjpool* nullptr" );
+  }
   LOG("Opening pool, pop=" << pop << ", oid=" << oid.off);
   if(OID_IS_NULL(oid)) {
     transaction::exec_tx(pmpool, [&] {
@@ -113,7 +117,9 @@ MVTree::MVTree (const string& path, PMEMoid oid, size_t size): pmpath(path) {
 
 MVTree::~MVTree() {
   LOG("Closing");
-  pmpool.close();
+  if(PMPATH_NO_PATH != pmpath) {
+    pmpool.close();
+  }
   LOG("Closed ok");
 }
 

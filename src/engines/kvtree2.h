@@ -147,6 +147,9 @@ class KVTree : public KVEngine {                           // hybrid B+ tree eng
                  const string& value) final;
     KVStatus Remove(const string& key) final;              // remove value for key
 
+    PMEMoid GetRootOid() final;
+    PMEMobjpool* GetPool() final;
+
     void Analyze(KVTreeAnalysis& analysis);                // report on internal state & stats
   protected:
     KVLeafNode* LeafSearch(const string& key);             // find node for key

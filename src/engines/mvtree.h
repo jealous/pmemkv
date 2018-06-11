@@ -166,8 +166,8 @@ class MVTree : public KVEngine {                           // hybrid B+ tree eng
     KVStatus Put(const string& key,                        // copy value from std::string
                  const string& value) final;
 
-    PMEMoid GetRootOid();
-    PMEMobjpool* GetPool();
+    PMEMoid GetRootOid() final;
+    PMEMobjpool* GetPool() final;
     KVStatus Remove(const string& key) final;              // remove value for key
 
     void Analyze(KVTreeAnalysis& analysis);                // report on internal state & stats

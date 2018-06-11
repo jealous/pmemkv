@@ -86,6 +86,9 @@ class KVEngine {                                           // storage engine imp
     virtual KVStatus Put(const string& key,                // copy value from std::string
                          const string& value) = 0;
     virtual KVStatus Remove(const string& key) = 0;        // remove value for key
+    virtual PMEMoid GetRootOid() = 0;
+    virtual PMEMobjpool* GetPool() = 0;
+
 };
 
 #pragma pack(push, 1)
@@ -148,6 +151,9 @@ int8_t kvengine_remove(KVEngine* kv,                       // remove value for k
 int8_t kvengine_get_ffi(FFIBuffer* buf);                   // FFI optimized methods
 int8_t kvengine_put_ffi(const FFIBuffer* buf);
 int8_t kvengine_remove_ffi(const FFIBuffer* buf);
+
+PMEMoid kvengine_get_rootoid(KVEngine* kv);
+PMEMobjpool* kvengine_get_pool(KVEngine* kv);
 
 #ifdef __cplusplus
 }

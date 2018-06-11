@@ -117,7 +117,7 @@ extern "C" KVEngine* kvengine_open_oid(const char* engine, const char* path, PME
 extern "C" void kvengine_close(KVEngine* kv) {
     return KVEngine::Close(kv);
 };
-
+  
 extern "C" int8_t kvengine_get(KVEngine* kv, const int32_t limit, const int32_t keybytes,
                                int32_t* valuebytes, const char* key, char* value) {
     return kv->Get(limit, keybytes, valuebytes, key, value);
@@ -145,6 +145,14 @@ extern "C" int8_t kvengine_put_ffi(const FFIBuffer* buf) {
 extern "C" int8_t kvengine_remove_ffi(const FFIBuffer* buf) {
     return buf->kv->Remove(string(buf->data, (size_t) buf->keybytes));
 }
+
+extern "C" PMEMoid kvengine_get_rootoid(KVEngine* kv) {
+    return kv->GetRootOid();
+}
+extern "C" PMEMobjpool* kvengine_get_pool(KVEngine* kv) {
+    return kv->GetPool();
+}
+
 
 // todo missing test cases for KVEngine static methods & extern C API
 

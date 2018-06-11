@@ -71,6 +71,10 @@ class BTreeEngine : public KVEngine {
     KVStatus Put(const string& key,                             // copy value from std::string
                  const string& value) final;
     KVStatus Remove(const string& key) final;                   // remove value for key
+
+    PMEMoid GetRootOid() final;
+    PMEMobjpool* GetPool() final;
+
   private:
     void Recover();
 
