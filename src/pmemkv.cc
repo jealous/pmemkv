@@ -106,6 +106,23 @@ void KVEngine::Close(KVEngine* kv) {
     }
 }
 
+void KVEngine::Free(KVEngine* kv) {
+    auto engine = kv->Engine();
+    kv->Free();
+    // TODO free and close shall be transactional?
+    if (engine == blackhole::ENGINE) {
+        delete (blackhole::Blackhole*) kv;
+    } else if (engine == mvtree::ENGINE) {
+        delete (mvtree::MVTree*) kv;
+    } else if (engine == kvtree::ENGINE) {
+        delete (kvtree::KVTree*) kv;
+    } else if (engine == kvtree2::ENGINE) {
+        delete (kvtree2::KVTree*) kv;
+    } else if (engine == btree::ENGINE) {
+        delete (btree::BTreeEngine*) kv;
+    }
+}
+
 extern "C" KVEngine* kvengine_open(const char* engine, const char* path, const size_t size) {
     return KVEngine::Open(engine, path, size);
 };
@@ -117,6 +134,10 @@ extern "C" KVEngine* kvengine_open_oid(const char* engine, const char* path, PME
 extern "C" void kvengine_close(KVEngine* kv) {
     return KVEngine::Close(kv);
 };
+extern "C" void kvengine_free(KVEngine* kv) {
+    return KVEngine::Free(kv);
+};
+
   
 extern "C" int8_t kvengine_get(KVEngine* kv, const int32_t limit, const int32_t keybytes,
                                int32_t* valuebytes, const char* key, char* value) {

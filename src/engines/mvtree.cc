@@ -53,12 +53,12 @@ static const string PMPATH_NO_PATH = "nopath";
 MVTree::MVTree (const string& path, size_t size): pmpath(path) {
   if ((access(path.c_str(), F_OK) != 0) && (size > 0)) {
     LOG("Creating filesystem pool, path=" << path << ", size=" << to_string(size));
-    pool<KVRoot> pop = pool<KVRoot>::create(path.c_str(), LAYOUT, size, S_IRWXU);
+    pool<MVRoot> pop = pool<MVRoot>::create(path.c_str(), LAYOUT, size, S_IRWXU);
     pmpool = pop;
     kv_root = pop.get_root();
   } else {
     LOG("Opening pool, path=" << path);
-    pool<KVRoot> pop = pool<KVRoot>::open(path.c_str(), LAYOUT);
+    pool<MVRoot> pop = pool<MVRoot>::open(path.c_str(), LAYOUT);
     pmpool = pop;
     kv_root = pop.get_root();
   }
@@ -74,10 +74,10 @@ MVTree::MVTree (PMEMobjpool* pop , PMEMoid oid, size_t size): pmpool(pop), pmpat
   LOG("Opening pool, pop=" << pop << ", oid=" << oid.off);
   if(OID_IS_NULL(oid)) {
     transaction::exec_tx(pmpool, [&] {
-      this->kv_root = make_persistent<KVRoot>();
+      this->kv_root = make_persistent<MVRoot>();
     });
   } else {
-    // TODO check oid is of type KVRoot
+    // TODO check oid is of type MVRoot
     this->kv_root = oid;
   }
 
@@ -95,17 +95,17 @@ MVTree::MVTree (const string& path, PMEMoid oid, size_t size): pmpath(path) {
       LOG("Creating filesystem pool, path=" << path << ", oid=" << oid.off
                                             << ", size=" << to_string(size));
       pmpool = pool_base::create(path.c_str(), LAYOUT, size, S_IRWXU);
-      make_persistent_atomic<KVRoot>(pmpool, kv_root);
+      make_persistent_atomic<MVRoot>(pmpool, kv_root);
     } 
   } else {
     LOG("Opening pool, path=" << path << ", oid=" << oid.off);
     pmpool = pool_base::open(path.c_str(), LAYOUT);
     if(OID_IS_NULL(oid)) {
       transaction::exec_tx(pmpool, [&] {
-        this->kv_root = make_persistent<KVRoot>();
+        this->kv_root = make_persistent<MVRoot>();
       });
     } else {
-      // TODO check oid is of type KVRoot
+      // TODO check oid is of type MVRoot
       this->kv_root = oid;
     }
  
@@ -124,8 +124,13 @@ MVTree::~MVTree() {
 }
 
 PMEMoid MVTree::GetRootOid() {
-  return kv_root.raw();
+  if(kv_root != nullptr) {
+    return kv_root.raw();
+  } else {
+    return OID_NULL;
+  }
 }
+
 PMEMobjpool* MVTree::GetPool() {
   return pmpool.get_handle();
 }
@@ -136,7 +141,7 @@ PMEMobjpool* MVTree::GetPool() {
 // KEY/VALUE METHODS
 // ===============================================================================================
 
-void MVTree::Analyze(KVTreeAnalysis &analysis) {
+void MVTree::Analyze(MVTreeAnalysis &analysis) {
   LOG("Analyzing");
   analysis.leaf_empty = 0;
   analysis.leaf_prealloc = leaves_prealloc.size();
@@ -270,7 +275,7 @@ KVStatus MVTree::Put(const string &key, const string &value) {
     auto leafnode = LeafSearch(key);
     if (!leafnode) {
       LOG("   adding head leaf");
-      unique_ptr<KVLeafNode> new_node(new KVLeafNode());
+      unique_ptr<MVLeafNode> new_node(new MVLeafNode());
       new_node->is_leaf = true;
       transaction::exec_tx(pmpool, [&] {
                                      if (!leaves_prealloc.empty()) {
@@ -279,7 +284,7 @@ KVStatus MVTree::Put(const string &key, const string &value) {
                                      } else {
                                        auto root = kv_root;
                                        auto old_head = root->head;
-                                       auto new_leaf = make_persistent<KVLeaf>();
+                                       auto new_leaf = make_persistent<MVLeaf>();
                                        root->head = new_leaf;
                                        new_leaf->next = old_head;
                                        new_node->leaf = new_leaf;
@@ -325,17 +330,33 @@ KVStatus MVTree::Remove(const string &key) {
   return OK;
 }
 
+
+void MVTree::Free() {
+  LOG("Free the tree"); 
+  // TODO impl
+  if(kv_root != nullptr) {
+      persistent_ptr<MVLeaf> pLeaf = kv_root->head;
+      while(pLeaf != nullptr) {
+          persistent_ptr<MVLeaf> pt = pLeaf->next;
+          delete_persistent_atomic<MVLeaf>(pLeaf);
+          pLeaf = pt;
+      }
+      delete_persistent_atomic<MVRoot>(kv_root);
+  }
+}
+
+
 // ===============================================================================================
 // PROTECTED LEAF METHODS
 // ===============================================================================================
 
-KVLeafNode *MVTree::LeafSearch(const string &key) {
-  KVNode *node = tree_top.get();
+MVLeafNode *MVTree::LeafSearch(const string &key) {
+  MVNode *node = tree_top.get();
   if (node == nullptr) return nullptr;
   bool matched;
   while (!node->is_leaf) {
     matched = false;
-    auto inner = (KVInnerNode *) node;
+    auto inner = (MVInnerNode *) node;
 #ifndef NDEBUG
     inner->assert_invariants();
 #endif
@@ -349,10 +370,10 @@ KVLeafNode *MVTree::LeafSearch(const string &key) {
     }
     if (!matched) node = inner->children[keycount].get();
   }
-  return (KVLeafNode *) node;
+  return (MVLeafNode *) node;
 }
 
-void MVTree::LeafFillEmptySlot(KVLeafNode *leafnode, const uint8_t hash,
+void MVTree::LeafFillEmptySlot(MVLeafNode *leafnode, const uint8_t hash,
                                    const string &key, const string &value) {
   for (int slot = LEAF_KEYS; slot--;) {
     if (leafnode->hashes[slot] == 0) {
@@ -362,7 +383,7 @@ void MVTree::LeafFillEmptySlot(KVLeafNode *leafnode, const uint8_t hash,
   }
 }
 
-bool MVTree::LeafFillSlotForKey(KVLeafNode *leafnode, const uint8_t hash,
+bool MVTree::LeafFillSlotForKey(MVLeafNode *leafnode, const uint8_t hash,
                                     const string &key, const string &value) {
   // scan for empty/matching slots
   int last_empty_slot = -1;
@@ -390,7 +411,7 @@ bool MVTree::LeafFillSlotForKey(KVLeafNode *leafnode, const uint8_t hash,
   return slot >= 0;
 }
 
-void MVTree::LeafFillSpecificSlot(KVLeafNode *leafnode, const uint8_t hash,
+void MVTree::LeafFillSpecificSlot(MVLeafNode *leafnode, const uint8_t hash,
                                       const string &key, const string &value, const int slot) {
   if (leafnode->hashes[slot] == 0) {
     leafnode->hashes[slot] = hash;
@@ -399,7 +420,7 @@ void MVTree::LeafFillSpecificSlot(KVLeafNode *leafnode, const uint8_t hash,
   leafnode->leaf->slots[slot].get_rw().set(hash, key, value);
 }
 
-void MVTree::LeafSplitFull(KVLeafNode *leafnode, const uint8_t hash,
+void MVTree::LeafSplitFull(MVLeafNode *leafnode, const uint8_t hash,
                                const string &key, const string &value) {
   string keys[LEAF_KEYS + 1];
   keys[LEAF_KEYS] = key;
@@ -411,11 +432,11 @@ void MVTree::LeafSplitFull(KVLeafNode *leafnode, const uint8_t hash,
   LOG("   splitting leaf at key=" << split_key);
 
   // split leaf into two leaves, moving slots that sort above split key to new leaf
-  unique_ptr<KVLeafNode> new_leafnode(new KVLeafNode());
+  unique_ptr<MVLeafNode> new_leafnode(new MVLeafNode());
   new_leafnode->parent = leafnode->parent;
   new_leafnode->is_leaf = true;
   transaction::exec_tx(pmpool, [&] {
-                                 persistent_ptr<KVLeaf> new_leaf;
+                                 persistent_ptr<MVLeaf> new_leaf;
                                  if (!leaves_prealloc.empty()) {
                                    new_leaf = leaves_prealloc.back();
                                    new_leafnode->leaf = new_leaf;
@@ -423,7 +444,7 @@ void MVTree::LeafSplitFull(KVLeafNode *leafnode, const uint8_t hash,
                                  } else {
                                    auto root = kv_root;
                                    auto old_head = root->head;
-                                   new_leaf = make_persistent<KVLeaf>();
+                                   new_leaf = make_persistent<MVLeaf>();
                                    root->head = new_leaf;
                                    new_leaf->next = old_head;
                                    new_leafnode->leaf = new_leaf;
@@ -445,11 +466,11 @@ void MVTree::LeafSplitFull(KVLeafNode *leafnode, const uint8_t hash,
   InnerUpdateAfterSplit(leafnode, move(new_leafnode), &split_key);
 }
 
-void MVTree::InnerUpdateAfterSplit(KVNode *node, unique_ptr<KVNode> new_node, string *split_key) {
+void MVTree::InnerUpdateAfterSplit(MVNode *node, unique_ptr<MVNode> new_node, string *split_key) {
   if (!node->parent) {
     assert(node == tree_top.get());
     LOG("   creating new top node for split_key=" << *split_key);
-    unique_ptr<KVInnerNode> top(new KVInnerNode());
+    unique_ptr<MVInnerNode> top(new MVInnerNode());
     top->keycount = 1;
     top->keys[0] = *split_key;
     node->parent = top.get();
@@ -464,7 +485,7 @@ void MVTree::InnerUpdateAfterSplit(KVNode *node, unique_ptr<KVNode> new_node, st
   }
 
   LOG("   updating parents for split_key=" << *split_key);
-  KVInnerNode *inner = node->parent;
+  MVInnerNode *inner = node->parent;
   { // insert split_key and new_node into inner node in sorted order
     const uint8_t keycount = inner->keycount;
     int idx = 0;  // position where split_key should be inserted
@@ -484,7 +505,7 @@ void MVTree::InnerUpdateAfterSplit(KVNode *node, unique_ptr<KVNode> new_node, st
   }
 
   // split inner node at the midpoint, update parents as needed
-  unique_ptr<KVInnerNode> ni(new KVInnerNode());                       // create new inner node
+  unique_ptr<MVInnerNode> ni(new MVInnerNode());                       // create new inner node
   ni->parent = inner->parent;                                          // set parent reference
   for (int i = INNER_KEYS_UPPER; i < keycount; i++) {                  // move all upper keys
     ni->keys[i - INNER_KEYS_UPPER] = move(inner->keys[i]);           // move key string
@@ -514,10 +535,10 @@ void MVTree::Recover() {
   LOG("Recovering");
 
   // traverse persistent leaves to build list of leaves to recover
-  std::list<KVRecoveredLeaf> leaves;
+  std::list<MVRecoveredLeaf> leaves;
   auto leaf = kv_root->head;
   while (leaf) {
-    unique_ptr<KVLeafNode> leafnode(new KVLeafNode());
+    unique_ptr<MVLeafNode> leafnode(new MVLeafNode());
     leafnode->leaf = leaf;
     leafnode->is_leaf = true;
 
@@ -550,7 +571,7 @@ void MVTree::Recover() {
   }
 
   // sort recovered leaves in ascending key order
-  leaves.sort([](const KVRecoveredLeaf &lhs, const KVRecoveredLeaf &rhs) {
+  leaves.sort([](const MVRecoveredLeaf &lhs, const MVRecoveredLeaf &rhs) {
                 return (lhs.max_key.compare(rhs.max_key) < 0);
               });
 
@@ -617,14 +638,14 @@ uint8_t MVTree::PearsonHash(const char *data, const size_t size) {
 // SLOT CLASS METHODS
 // ===============================================================================================
 
-bool KVSlot::empty() {
+bool MVSlot::empty() {
     if (kv)
         return false;
     else
         return true;
 }
 
-void KVSlot::clear() {
+void MVSlot::clear() {
     if (kv) {
         char* p = kv.get();
         set_ph_direct(p, 0);
@@ -636,7 +657,7 @@ void KVSlot::clear() {
     }
 }
 
-void KVSlot::set(const uint8_t hash, const string& key, const string& value) {
+void MVSlot::set(const uint8_t hash, const string& key, const string& value) {
     if (kv) {
         char* p = kv.get();
         delete_persistent<char[]>(kv, sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t) + get_ks_direct(p) +
@@ -662,7 +683,7 @@ void KVSlot::set(const uint8_t hash, const string& key, const string& value) {
 // Node invariants
 // ===============================================================================================
 
-void KVInnerNode::assert_invariants() {
+void MVInnerNode::assert_invariants() {
     assert(keycount <= INNER_KEYS);
     for (auto i = 0; i < keycount; ++i) {
         assert(keys[i].size() > 0);

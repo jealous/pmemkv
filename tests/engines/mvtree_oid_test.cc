@@ -49,7 +49,7 @@ public:
 
 class MVOidTest : public testing::Test {
 public:
-    KVTreeAnalysis analysis;
+    MVTreeAnalysis analysis;
     MVTree *kv;
     PMEMoid rootoid;
 
@@ -80,13 +80,13 @@ private:
 };
 
 // =============================================================================================
-// TEST EMPTY TREE with KVRoot on one newly created pmem object
+// TEST EMPTY TREE with MVRoot on one newly created pmem object
 // =============================================================================================
 
 
 TEST_F(MVOidEmptyTest, CreateInstanceTestWithOid) {
     MVTree *kv = new MVTree(PATH, OID_NULL, PMEMOBJ_MIN_POOL);
-    KVTreeAnalysis analysis = {};
+    MVTreeAnalysis analysis = {};
     kv->Analyze(analysis);
     ASSERT_EQ(analysis.leaf_empty, 0);
     ASSERT_EQ(analysis.leaf_prealloc, 0);

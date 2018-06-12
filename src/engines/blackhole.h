@@ -56,6 +56,8 @@ class Blackhole : public KVEngine {
                  const string& value) final;
     KVStatus Remove(const string& key) final;              // remove value for key
 
+    void Free() final;
+
     PMEMoid GetRootOid() final;
     PMEMobjpool* GetPool() final;
 

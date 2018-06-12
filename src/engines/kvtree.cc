@@ -207,6 +207,13 @@ KVStatus KVTree::Remove(const string& key) {
     }
     return OK;
 }
+
+
+void KVTree::Free() {
+  LOG("Free the tree"); 
+  // TODO impl
+}
+
 PMEMoid KVTree::GetRootOid() {
   return pmpool.get_root().raw();
 }

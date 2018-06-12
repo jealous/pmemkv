@@ -80,6 +80,8 @@ class KVEngine {                                           // storage engine imp
 
     static void Close(KVEngine* kv);                       // close storage engine
 
+    static void Free(KVEngine* kv);                       // close storage engine
+
     virtual string Engine() = 0;                           // engine identifier
     virtual KVStatus Get(int32_t limit,                    // copy value to fixed-size buffer
                          int32_t keybytes,
@@ -91,6 +93,7 @@ class KVEngine {                                           // storage engine imp
     virtual KVStatus Put(const string& key,                // copy value from std::string
                          const string& value) = 0;
     virtual KVStatus Remove(const string& key) = 0;        // remove value for key
+    virtual void Free() = 0;        // remove value for key
 
     virtual PMEMoid GetRootOid() = 0;
     virtual PMEMobjpool* GetPool() = 0;
@@ -142,6 +145,8 @@ KVEngine* kvengine_open_pop_oid(const char* engine,                // open stora
 
 
 void kvengine_close(KVEngine* kv);                         // close storage engine
+
+void kvengine_free(KVEngine* kv);                         // close storage engine
 
 int8_t kvengine_get(KVEngine* kv,                          // copy value to fixed-size buffer
                     int32_t limit,

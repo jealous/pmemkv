@@ -49,7 +49,7 @@ public:
 
 class MVTest : public testing::Test {
 public:
-    KVTreeAnalysis analysis;
+    MVTreeAnalysis analysis;
     MVTree *kv;
 
     MVTest() {
@@ -77,12 +77,12 @@ private:
 };
 
 // =============================================================================================
-// TEST EMPTY TREE with KVRoot on the pmem root object
+// TEST EMPTY TREE with MVRoot on the pmem root object
 // =============================================================================================
 
 TEST_F(MVEmptyTest, CreateInstanceTest) {
     MVTree *kv = new MVTree(PATH, PMEMOBJ_MIN_POOL);
-    KVTreeAnalysis analysis = {};
+    MVTreeAnalysis analysis = {};
     kv->Analyze(analysis);
     ASSERT_EQ(analysis.leaf_empty, 0);
     ASSERT_EQ(analysis.leaf_prealloc, 0);
